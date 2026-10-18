@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Crónica · Batería · Auditoría</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700&family=Cormorant+Garamond:wght@600&display=swap" rel="stylesheet">
+<style>
+:root{--g:#d4af5a;--g2:#8a6a22;--c:#efe3c2;--bg:#120e28}
+*{box-sizing:border-box}
+body{margin:0;min-height:100dvh;color:var(--c);font:600 16px/1.35 'Cormorant Garamond',Georgia,serif;
+background:linear-gradient(115deg,#17356a,#2e1b62 55%,#150d33) fixed}
+.w{max-width:480px;margin:auto;padding:10px 12px 28px}
+h1{font:700 22px Cinzel,serif;letter-spacing:.06em;margin:0;text-align:center;
+background:linear-gradient(#f9e8aa,#b8892e);-webkit-background-clip:text;background-clip:text;color:transparent}
+.sub{text-align:center;opacity:.8;font-size:13px;margin:2px 0 10px}
+.card{background:rgba(9,13,32,.75);border:2px solid var(--g);border-radius:12px;padding:12px;margin:0 0 10px;
+box-shadow:0 6px 20px rgba(0,0,0,.4)}
+.card h2{font:700 12px Cinzel,serif;letter-spacing:.1em;color:var(--g);margin:0 0 8px;text-transform:uppercase}
+.row{display:flex;flex-wrap:wrap;gap:6px;align-items:end}
+label{display:flex;flex-direction:column;gap:2px;font-size:12px;flex:1 1 90px}
+input,select{background:var(--c);color:#2a1a08;border:1px solid var(--g2);border-radius:4px;padding:7px;font:700 15px Cormorant Garamond,serif;min-height:36px;width:100%}
+button{font:700 12px Cinzel,serif;color:#2a1604;background:linear-gradient(#e8cc77,#9a7424);border:1px solid #5c4412;
+border-radius:5px;padding:8px 10px;cursor:pointer;min-height:36px}
+button.red{background:linear-gradient(#c43a37,#7d1514);color:#fbe9c4}
+button.chip{font-size:11px;padding:5px 8px;min-height:28px;background:linear-gradient(#cfd7e2,#7c8797)}
+button.ghost{background:transparent;border:1px solid var(--g);color:var(--c);font-size:11px}
+#msg{min-height:16px;color:#ffd27a;font-size:13px;margin:4px 0 0}
+.pct-wrap{text-align:center;padding:4px 0 8px}
+.pct{font:700 42px/1 Cinzel,serif;color:#5dff6a;text-shadow:0 0 16px #2cff44;letter-spacing:.02em}
+.pct small{display:block;font-size:13px;color:#b8ffc0;margin-top:4px;letter-spacing:.08em}
+.remain{font:700 15px Cinzel,serif;opacity:.9;margin-top:2px}
+.bat{position:relative;margin:0 18px 0 0;padding:8px;border-radius:14px;
+background:linear-gradient(150deg,#e9eef4,#8d98a8);border:3px solid var(--g)}
+.bat::after{content:'';position:absolute;right:-16px;top:28%;width:13px;height:42%;border-radius:0 6px 6px 0;
+background:linear-gradient(#e3c46f,#8a6a22);border:2px solid #5c4412;border-left:0}
+.cells{display:grid;grid-template-columns:repeat(12,1fr);gap:3px;padding:4px;background:#0a0f24;border-radius:8px}
+.c{aspect-ratio:1;border-radius:3px;font:700 9px Cinzel,serif;display:flex;align-items:center;justify-content:center;
+background:rgba(120,160,230,.12);border:1px solid rgba(160,190,255,.15);color:#04101a;position:relative;overflow:hidden}
+.c.ac{background:var(--n);box-shadow:0 0 6px var(--n)}
+.c.pe{background:color-mix(in srgb,var(--n) 22%,transparent);border:1px dashed var(--n);color:var(--n)}
+.c.sl{background:linear-gradient(160deg,#4631a8,#241466);border-color:#7a62ff;color:#c9bcff}
+.c.used{background:linear-gradient(160deg,#2a5a3a,#1a3a28);border-color:#4ade80;color:#b8ffc0}
+.c.partial{color:var(--c)}
+.c.partial .fill{position:absolute;inset:0 auto 0 0;background:linear-gradient(180deg,rgba(93,255,106,.55),rgba(45,200,80,.3));z-index:0}
+.c.partial span{position:relative;z-index:1;text-shadow:0 0 3px #000}
+.c.now{outline:2px solid #fff;outline-offset:1px}
+@media(prefers-reduced-motion:reduce){.c.now{outline-color:var(--g)}}
+.live{height:5px;border-radius:3px;background:rgba(255,255,255,.08);margin-top:6px;overflow:hidden}
+.live>i{display:block;height:100%;background:linear-gradient(90deg,#5dff6a,#2cff44);border-radius:3px;transition:width .4s linear}
+.leg{display:flex;flex-wrap:wrap;gap:8px;margin-top:6px;font-size:12px}
+.sw{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:3px;vertical-align:-1px}
+ul{list-style:none;margin:0;padding:0}
+li{display:flex;gap:6px;align-items:center;padding:6px 0;border-bottom:1px solid rgba(212,175,90,.2);font-size:14px}
+li .nm{flex:1;font-weight:700}
+li small{opacity:.75}
+.dot{width:10px;height:10px;border-radius:50%;background:var(--n);flex-shrink:0}
+.bad{color:#ff8a8a}
+.hint{font-size:11px;opacity:.7;margin:4px 0 0;line-height:1.35}
+footer{text-align:center;font-size:11px;opacity:.55;padding:6px 0}
+.audit-list{max-height:220px;overflow:auto;font-size:12px;margin-top:8px}
+.audit-list div{padding:5px 0;border-bottom:1px solid rgba(212,175,90,.15)}
+.audit-list .ts{opacity:.7;font-size:11px}
+.sync-ok{color:#8dffb0}.sync-err{color:#ff8a8a}
+</style>
+</head>
+<body>
+<div class="w">
+  <h1>Crónica del Día</h1>
+  <p class="sub">Batería · vigilia · auditoría</p>
+
+  <div class="card" id="rector">
+    <div class="pct-wrap">
+      <div class="pct" id="pct">—<small>VIGILIA</small></div>
+      <div class="remain" id="remain">—:—:—</div>
+    </div>
+    <div class="bat"><div class="cells" id="cells"></div></div>
+    <div class="live"><i id="liveFill"></i></div>
+    <div class="leg" id="leg"></div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label>Fecha<input type="date" id="date"></label>
+      <label>Levantarse<input type="time" id="wake"></label>
+      <label>Acostarse<input type="time" id="bed"></label>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button type="button" id="wakeNow">↑ Ahora</button>
+      <button type="button" id="bedNow">↓ Ahora</button>
+      <button type="button" class="ghost" id="snd">♪ ON</button>
+    </div>
+    <p class="hint" id="sleepInfo"></p>
+    <p id="msg" role="status" aria-live="polite"></p>
+  </div>
+
+  <div class="card">
+    <div class="row" id="chips" style="margin-bottom:6px"></div>
+    <div class="row">
+      <label style="flex:2 1 120px">Actividad<input id="name" maxlength="36" placeholder="Nombre"></label>
+      <label>Inicio<input type="time" id="st"></label>
+      <label>Fin<input type="time" id="en"></label>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button type="button" id="add">+ Agregar</button>
+      <button type="button" id="addDone">+ Hecho</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <ul id="list"></ul>
+  </div>
+
+  <!-- AUDITORÍA -->
+  <div class="card" id="auditoria">
+    <h2>Auditoría</h2>
+    <p class="hint">Registro append-only: cada alta, cambio done, borrado y cambio de jornada queda con fecha/hora real del dispositivo y de la jornada. Exportable a Excel (CSV).</p>
+    <div class="row">
+      <label>Desde<input type="date" id="audFrom"></label>
+      <label>Hasta<input type="date" id="audTo"></label>
+    </div>
+    <div class="row" style="margin-top:6px">
+      <button type="button" id="audRefresh">Ver</button>
+      <button type="button" id="audCsv">Descargar Excel (CSV)</button>
+      <button type="button" class="ghost" id="audSync">Sync Cloudflare</button>
+    </div>
+    <p class="hint" id="audStats"></p>
+    <div class="audit-list" id="audList"></div>
+    <div class="row" style="margin-top:8px">
+      <label style="flex:1 1 100%">URL Worker (opcional, sync)
+        <input id="audEndpoint" type="url" placeholder="https://cronica-audit.TU_SUBDOMINIO.workers.dev">
+      </label>
+    </div>
+    <p class="hint" id="audSyncMsg"></p>
+  </div>
+
+  <footer>v1.3 Auditoría · Rector CompactoProductivo · localStorage + CSV · Cloudflare opcional</footer>
+</div>
+
+<script>
+const $=s=>document.querySelector(s);
+const SLEEP=510, MAXA=1440-SLEEP;
+const NEON=['#39ff14','#00f0ff','#ff2bd6','#fff200','#ff6a00','#ff3b5c','#9dff00','#00ffa6'];
+const PRE=[['Lectura','w',30],['Ejercicio',0,45],['Enfoque',0,30],['Sin pantallas','b',60]];
+const LS_AUDIT='cronica:audit';
+const LS_ENDPOINT='cronica:audit_endpoint';
+const pad=n=>String(n).padStart(2,'0');
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const todayStr=()=>{const d=new Date();return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())};
+const mm=t=>{if(!t||typeof t!=='string')return 0;const[a,b]=t.split(':');return(+a)*60+(+b)};
+const hm=m=>{m=((m%1440)+1440)%1440;return pad(Math.floor(m/60))+':'+pad(m%60)};
+const dur=m=>{m=Math.max(0,Math.round(m));return Math.floor(m/60)+'h '+pad(m%60)+'m'};
+const hms=s=>{s=Math.max(0,Math.floor(s));return pad(Math.floor(s/3600))+':'+pad(Math.floor((s%3600)/60))+':'+pad(s%60)};
+const isoNow=()=>new Date().toISOString();
+const uid=()=>Date.now()+Math.floor(Math.random()*1000);
+
+let S,colors={},A=MAXA,soundOn=true,audioCtx=null,tick=null,audit=[];
+
+function ensureAudio(){
+  if(!audioCtx){const AC=window.AudioContext||window.webkitAudioContext;if(AC)audioCtx=new AC()}
+  if(audioCtx&&audioCtx.state==='suspended')audioCtx.resume();return audioCtx;
+}
+function tone(freq,ms,type='sine',gain=.1){
+  if(!soundOn)return;const ctx=ensureAudio();if(!ctx)return;
+  const t=ctx.currentTime,o=ctx.createOscillator(),g=ctx.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(gain,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+ms/1000);
+  o.connect(g);g.connect(ctx.destination);o.start(t);o.stop(t+ms/1000+.05);
+}
+
+/* ─── Auditoría (append-only) ───────────────────────────────── */
+function loadAudit(){
+  try{audit=JSON.parse(localStorage.getItem(LS_AUDIT))||[]}catch(e){audit=[]}
+  if(!Array.isArray(audit))audit=[];
+}
+function saveAudit(){
+  try{localStorage.setItem(LS_AUDIT,JSON.stringify(audit))}catch(e){msg('Auditoría: almacenamiento lleno')}
+}
+function auditPush(ev){
+  const row=Object.assign({
+    id:uid(),
+    tsRegistro:isoNow(),
+    fechaJornada:S?S.date:todayStr(),
+    tz:Intl.DateTimeFormat().resolvedOptions().timeZone||''
+  },ev);
+  audit.push(row);
+  saveAudit();
+  queueMicrotask(renderAudit);
+  return row;
+}
+function auditFilter(from,to){
+  return audit.filter(e=>{
+    const d=e.fechaJornada||(e.tsRegistro||'').slice(0,10);
+    if(from&&d<from)return false;
+    if(to&&d>to)return false;
+    return true;
+  });
+}
+function renderAudit(){
+  const from=$('#audFrom').value,to=$('#audTo').value;
+  const rows=auditFilter(from,to).slice().reverse();
+  $('#audStats').textContent=rows.length+' evento(s) · total histórico '+audit.length;
+  $('#audList').innerHTML=rows.slice(0,80).map(e=>{
+    const tip=e.tipo||'';
+    const det=[e.name,e.start&&e.end?(e.start+'-'+e.end):'',e.done!=null?(e.done?'hecho':'pendiente'):'',e.wake&&('wake '+e.wake),e.bed&&('bed '+e.bed),e.detalle]
+      .filter(Boolean).join(' · ');
+    return '<div><div class="ts">'+esc(e.tsRegistro)+' · jornada '+esc(e.fechaJornada)+'</div><b>'+esc(tip)+'</b> '+esc(det)+'</div>';
+  }).join('')||'<div class="hint">Sin eventos en el rango</div>';
+}
+function downloadCsv(){
+  const from=$('#audFrom').value,to=$('#audTo').value;
+  const rows=auditFilter(from,to);
+  const cols=['id','tsRegistro','fechaJornada','tz','tipo','actId','name','start','end','done','wake','bed','detalle'];
+  const escCsv=v=>{
+    if(v==null)return '';
+    const s=String(v);
+    return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;
+  };
+  const lines=[cols.join(',')].concat(rows.map(r=>cols.map(c=>escCsv(r[c])).join(',')));
+  const blob=new Blob(['\ufeff'+lines.join('\n')],{type:'text/csv;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download='cronica_auditoria_'+(from||'ini')+'_'+(to||'fin')+'.csv';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  msg('CSV descargado · ábrelo en Excel');
+  tone(523,250);
+}
+async function syncCloudflare(){
+  const url=($('#audEndpoint').value||'').trim().replace(/\/$/,'');
+  const box=$('#audSyncMsg');
+  if(!url){box.innerHTML='<span class="sync-err">Configura la URL del Worker</span>';return}
+  try{localStorage.setItem(LS_ENDPOINT,url)}catch(e){}
+  box.textContent='Sincronizando…';
+  try{
+    const res=await fetch(url+'/audit',{
+      method:'POST',
+      headers:{'content-type':'application/json'},
+      body:JSON.stringify({events:audit,device:navigator.userAgent.slice(0,120)})
+    });
+    if(!res.ok)throw new Error('HTTP '+res.status);
+    const j=await res.json().catch(()=>({}));
+    box.innerHTML='<span class="sync-ok">Sync OK · '+(j.accepted!=null?j.accepted+' eventos':'guardado')+'</span>';
+    tone(659,300);
+  }catch(err){
+    box.innerHTML='<span class="sync-err">Sync falló: '+esc(err.message)+' (sigue válido el CSV local)</span>';
+    tone(130,400,'sawtooth',.08);
+  }
+}
+
+function load(d){
+  try{S=JSON.parse(localStorage.getItem('cronica:'+d))}catch(e){S=null}
+  if(!S)S={wake:'06:30',bed:'22:00',acts:[]};
+  S.date=d;if(!Array.isArray(S.acts))S.acts=[];
+  try{colors=JSON.parse(localStorage.getItem('cronica:colores'))||{}}catch(e){colors={}}
+  try{const s=localStorage.getItem('cronica:sound');if(s!==null)soundOn=s==='1'}catch(e){}
+}
+function save(){
+  try{
+    localStorage.setItem('cronica:'+S.date,JSON.stringify(S));
+    localStorage.setItem('cronica:colores',JSON.stringify(colors));
+    localStorage.setItem('cronica:sound',soundOn?'1':'0');
+  }catch(e){}
+}
+function msg(t){$('#msg').textContent=t;clearTimeout(window._m);window._m=setTimeout(()=>{$('#msg').textContent=''},5e3)}
+
+const off=t=>(mm(t)-mm(S.wake)+1440)%1440;
+function geo(){
+  A=off(S.bed);
+  if(A===0||A>MAXA){A=MAXA;S.bed=hm(mm(S.wake)+MAXA);msg('Sueño mín. 8h30 → bed '+S.bed)}
+}
+function col(n){const k=String(n).toLowerCase();if(!colors[k])colors[k]=NEON[Object.keys(colors).length%NEON.length];return colors[k]}
+function seg(a){const s=off(a.start),e=off(a.end);return{s,e,ok:e>s&&e<=A}}
+function nowOff(){
+  if(S.date!==todayStr())return -1;
+  const n=new Date();return (n.getHours()*60+n.getMinutes()+n.getSeconds()/60-mm(S.wake)+1440)%1440;
+}
+function free(d){
+  for(let t=0;t<=A-d;t+=15){
+    if(!S.acts.some(a=>{const g=seg(a);return g.ok&&t<g.e&&t+d>g.s}))return t;
+  }
+  return null;
+}
+
+function updateCountdown(){
+  const no=nowOff(),pctEl=$('#pct'),rem=$('#remain'),fill=$('#liveFill');
+  if(no<0){pctEl.innerHTML='—<small>VIGILIA</small>';rem.textContent='—:—:—';fill.style.width='0%';return}
+  if(no>=A){pctEl.innerHTML='0%<small>AGOTADA</small>';rem.textContent='00:00:00';fill.style.width='100%';return}
+  const left=A-no,pct=Math.max(0,Math.min(100,(left/A)*100));
+  pctEl.innerHTML=Math.round(pct)+'%<small>VIGILIA</small>';
+  rem.textContent=hms(left*60);
+  fill.style.width=((no/A)*100)+'%';
+  const hi=Math.floor(no/60),ph=((no%60)/60)*100;
+  document.querySelectorAll('#cells .c').forEach((c,i)=>{
+    const on=i===hi&&no<A;c.classList.toggle('now',on);
+    if(on){let f=c.querySelector('.fill');if(!f){f=document.createElement('div');f.className='fill';c.appendChild(f)}
+      f.style.width=ph+'%'}
+  });
+}
+
+function draw(){
+  const no=nowOff(),ok=S.acts.filter(a=>seg(a).ok),html=[];
+  for(let i=0;i<24;i++){
+    const start=i*60,mid=start+30,ab=mm(S.wake)+start,lab=pad(Math.floor((ab%1440)/60));
+    let cls='',st='',tip=hm(ab)+'–'+hm(ab+60),inner='<span>'+lab+'</span>';
+    if(mid>=A){cls='sl';tip+=' · dormir'}
+    else{
+      const a=ok.find(a=>{const g=seg(a);return start<g.e&&start+60>g.s});
+      if(a){cls=a.done?'ac':'pe';st='--n:'+col(a.name);tip+=' · '+a.name}
+      else if(no>=0&&start+60<=no){cls='used';tip+=' · usada'}
+      else tip+=' · libre';
+    }
+    if(no>=0&&no<A&&Math.floor(no/60)===i){
+      cls+=(cls?' ':'')+'partial now';
+      inner='<div class="fill" style="width:'+((no%60)/60*100)+'%"></div><span>'+lab+'</span>';
+    }
+    html.push('<div class="c '+cls+'" style="'+st+'" title="'+esc(tip)+'">'+inner+'</div>');
+  }
+  $('#cells').innerHTML=html.join('');
+  const names=[...new Set(ok.map(a=>a.name))];
+  $('#leg').innerHTML=names.map(x=>'<span><i class="sw" style="background:'+col(x)+'"></i>'+esc(x)+'</span>').join('')+
+    '<span><i class="sw" style="background:#4631a8"></i>Dormir</span><span><i class="sw" style="background:#2a5a3a"></i>Usada</span>';
+  $('#sleepInfo').textContent='☾ '+dur(1440-A)+' sueño · '+S.bed+' → '+S.wake+' · límite bed '+hm(mm(S.wake)+MAXA);
+
+  const L=S.acts.slice().sort((a,b)=>off(a.start)-off(b.start));
+  $('#list').innerHTML=L.length?L.map(a=>{
+    const g=seg(a);
+    return '<li><i class="dot" style="--n:'+col(a.name)+'"></i><span class="nm">'+esc(a.name)+
+      '<br><small>'+(g.ok?hm(mm(S.wake)+g.s)+'–'+hm(mm(S.wake)+g.e)+' · '+dur(g.e-g.s):'<span class="bad">Fuera de jornada</span>')+
+      '</small></span><button data-t="'+a.id+'" type="button">'+(a.done?'✔':'○')+'</button>'+
+      '<button class="red" data-x="'+a.id+'" type="button">✕</button></li>';
+  }).join(''):'<li style="opacity:.6">Sin actividades · chip o escribe arriba</li>';
+  updateCountdown();
+}
+
+function sync(){
+  $('#date').value=S.date;$('#wake').value=S.wake;$('#bed').value=S.bed;
+  $('#snd').textContent=soundOn?'♪ ON':'♪ OFF';
+}
+function refresh(){geo();sync();save();draw()}
+
+function addAct(done){
+  const name=$('#name').value.trim(),st=$('#st').value,en=$('#en').value;
+  if(!name||!st||!en){msg('Nombre + inicio + fin');tone(130,400,'sawtooth',.08);return}
+  const a={id:Date.now(),name,start:st,end:en,done:!!done};
+  const g=seg(a);
+  if(!g.ok){msg('Fuera de jornada ('+S.wake+'→'+S.bed+')');tone(130,400,'sawtooth',.08);return}
+  if(S.acts.some(o=>{const h=seg(o);return h.ok&&g.s<h.e&&g.e>h.s})){msg('Solapa otra actividad');tone(130,400,'sawtooth',.08);return}
+  S.acts.push(a);$('#name').value='';
+  auditPush({tipo:'act_add',actId:a.id,name:a.name,start:a.start,end:a.end,done:a.done});
+  tone(done?523:349,500);refresh();
+}
+
+$('#chips').innerHTML=PRE.map((p,i)=>'<button class="chip" data-p="'+i+'" type="button">'+p[0]+'</button>').join('');
+$('#chips').onclick=e=>{
+  const i=e.target.dataset.p;if(i==null)return;tone(880,60,'square',.04);
+  const[n,k,d]=PRE[i];let s;
+  if(k==='w')s=0;else if(k==='b')s=Math.max(0,A-d);
+  else{s=free(d);if(s===null){msg('Sin hueco de '+d+' min');tone(130,400,'sawtooth',.08);return}}
+  $('#name').value=n;$('#st').value=hm(mm(S.wake)+s);$('#en').value=hm(mm(S.wake)+s+d);
+};
+$('#add').onclick=()=>addAct(false);
+$('#addDone').onclick=()=>addAct(true);
+$('#list').onclick=e=>{
+  const t=e.target.dataset.t,x=e.target.dataset.x;
+  if(t){
+    S.acts.forEach(a=>{
+      if(String(a.id)===String(t)){
+        a.done=!a.done;
+        auditPush({tipo:a.done?'act_done':'act_undone',actId:a.id,name:a.name,start:a.start,end:a.end,done:a.done});
+        tone(a.done?659:880,a.done?400:60);
+      }
+    });
+    refresh();
+  }
+  if(x){
+    const a=S.acts.find(z=>String(z.id)===String(x));
+    if(a)auditPush({tipo:'act_del',actId:a.id,name:a.name,start:a.start,end:a.end,done:a.done,detalle:'eliminada'});
+    S.acts=S.acts.filter(a=>String(a.id)!==String(x));
+    tone(165,350,'sawtooth',.08);refresh();
+  }
+};
+$('#wake').onchange=e=>{if(e.target.value){S.wake=e.target.value;auditPush({tipo:'wake',wake:S.wake});tone(392,300);refresh()}};
+$('#bed').onchange=e=>{if(e.target.value){S.bed=e.target.value;auditPush({tipo:'bed',bed:S.bed});tone(311,300);refresh()}};
+const nowHm=()=>{const n=new Date();return hm(n.getHours()*60+n.getMinutes())};
+$('#wakeNow').onclick=()=>{S.wake=nowHm();auditPush({tipo:'wake',wake:S.wake,detalle:'registrar_ahora'});tone(523,350);refresh()};
+$('#bedNow').onclick=()=>{S.bed=nowHm();auditPush({tipo:'bed',bed:S.bed,detalle:'registrar_ahora'});tone(196,400,'sawtooth',.08);refresh()};
+$('#date').onchange=e=>{if(e.target.value){load(e.target.value);auditPush({tipo:'day_load',detalle:'cambio_fecha'});refresh()}};
+$('#snd').onclick=()=>{soundOn=!soundOn;if(soundOn){ensureAudio();tone(440,200)}sync();save()};
+
+$('#audRefresh').onclick=()=>renderAudit();
+$('#audCsv').onclick=()=>downloadCsv();
+$('#audSync').onclick=()=>syncCloudflare();
+$('#audFrom').onchange=$('#audTo').onchange=()=>renderAudit();
+
+loadAudit();
+load(todayStr());
+try{$('#audEndpoint').value=localStorage.getItem(LS_ENDPOINT)||''}catch(e){}
+$('#audFrom').value=todayStr();
+$('#audTo').value=todayStr();
+refresh();
+renderAudit();
+document.body.addEventListener('pointerdown',()=>ensureAudio(),{once:true});
+tick=setInterval(updateCountdown,1000);
+setInterval(()=>{if(S.date===todayStr())draw()},3e4);
+</script>
+</body>
+</html>
